@@ -1,6 +1,4 @@
-Here’s a complete and well-structured **README.md** for your **ECOBOT** project. You can directly copy and paste this into your GitHub repository:
-
----
+<meta name="google-site-verification" content="6P2nUH4A_60NmP53GEbHzN3fmz79z_lg7V4OFiA53xg" />
 
 # ECOBOT - AI Chatbot
 
