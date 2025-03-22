@@ -137,5 +137,6 @@ This project is licensed under the **MIT License**. See the [LICENSE](LICENSE) f
 - **LinkedIn**: [Your LinkedIn Profile](https://www.linkedin.com/in/YourProfile) *(Update this link)*
 
 ---
+ "ECOBOT AI Chatbot", "Free AI Chatbot", "Python Chatbot on GitHub"
 
 This **README.md** covers everything needed for your ECOBOT project, including installation, setup, usage, and contribution guidelines. If you need any more sections or modifications, let me know! 🚀😃"# ECOBOT" 
