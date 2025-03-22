@@ -7,59 +7,52 @@ document.getElementById("dark-mode-toggle").addEventListener("click", function()
     this.textContent = document.body.classList.contains("light-mode") ? "🌞 Light Mode" : "🌙 Dark Mode";
 });
 
-// 🎙️ Mic Button Click Event
+// 🎙️ Mic Toggle (Fixed)
 document.getElementById("mic-toggle").addEventListener("click", function() {
+    isSpeaking = !isSpeaking; // 🔄 Toggle Speak Mode
     if (isSpeaking) {
-        synth.cancel();  // 🔇 Stop Speaking
-        isSpeaking = false;
-    } else {
         let lastBotMessage = document.querySelector(".message.bot:last-child");
         if (lastBotMessage) {
             speak(lastBotMessage.textContent);
         }
+    } else {
+        synth.cancel(); // 🔇 Stop Speaking
     }
 });
 
-// 🔊 Speak Function (Only on Mic Button Click)
+// 🔊 Speak Function (Now Works Correctly)
 function speak(text) {
     if (!text) return;
 
     let speech = new SpeechSynthesisUtterance(text);
     speech.lang = "en-US";
-    speech.onend = () => { isSpeaking = false; };  // 🎤 Reset After Speaking
+    speech.onend = () => { isSpeaking = false; };
 
-    isSpeaking = true;
     synth.speak(speech);
 }
 
-// 🎯 **Now, Pressing Enter Will Also Send Message**
-document.getElementById("user-input").addEventListener("keypress", function (event) {
-    if (event.key === "Enter") {
-        event.preventDefault(); // Prevent Default Form Submission
-        sendMessage(); // ⏩ Call sendMessage() on Enter Key
-    }
-});
-
-// 🔹 Send Message Function (Fixed)
+// 🎯 Send Message Function (Fixed)
 function sendMessage() {
     let userInput = document.getElementById("user-input").value.trim();
     if (userInput === "") return;
 
     let chatBox = document.getElementById("chat-box");
 
-    // 👤 User Message
     let userMessage = document.createElement("div");
     userMessage.className = "message user";
     userMessage.textContent = userInput;
     chatBox.appendChild(userMessage);
 
-    // 🤖 Bot Typing...
+    let botMessageContainer = document.createElement("div");
+    botMessageContainer.className = "bot-container";
+
     let botMessage = document.createElement("div");
     botMessage.className = "message bot";
-    botMessage.textContent = "Typing...";
-    chatBox.appendChild(botMessage);
+    botMessage.textContent = "Thinking...";
 
-    // 🔄 Fetch API to Send Message
+    botMessageContainer.appendChild(botMessage);
+    chatBox.appendChild(botMessageContainer);
+
     fetch("/chat", {
         method: "POST",
         body: JSON.stringify({ message: userInput, chat_id: currentChatId }),
@@ -67,16 +60,22 @@ function sendMessage() {
     })
     .then(response => response.json())
     .then(data => {
-        botMessage.textContent = data.response;  // ✅ Bot Answer
+        botMessage.textContent = data.response;
 
-        // 🔊 Speak (Only if Mic Button is Clicked)
+        // 🔊 Speak Automatically If Mic is ON
         if (isSpeaking) {
             speak(data.response);
         }
     });
 
-    document.getElementById("user-input").value = "";  // Clear Input Field
+    document.getElementById("user-input").value = "";
 }
+document.getElementById("user-input").addEventListener("keypress", function(event) {
+    if (event.key === "Enter") { // 🎯 जब Enter दबे
+        sendMessage(); // 📩 Message Send करो
+    }
+});
+
 
 // 🎤 Voice Input (Speech-to-Text)
 document.getElementById("mic-btn").addEventListener("click", function() {
@@ -151,68 +150,6 @@ function updateChatHistory() {
             document.getElementById("chat-history").innerHTML = doc.getElementById("chat-history").innerHTML;
         });
 }
-
-
-
-function sendMessage() {
-    let userInput = document.getElementById("user-input").value.trim();
-    if (userInput === "") return;
-
-    let chatBox = document.getElementById("chat-box");
-
-    // 👤 User Message
-    let userMessage = document.createElement("div");
-    userMessage.className = "message user";
-    userMessage.textContent = userInput;
-    chatBox.appendChild(userMessage);
-
-    // 🤖 Bot Typing...
-    let botMessageContainer = document.createElement("div");
-    botMessageContainer.className = "bot-container";
-
-    let botMessage = document.createElement("div");
-    botMessage.className = "message bot";
-    botMessage.textContent = "Thinking..."; // Initially, bot is thinking
-
-    let copyButton = document.createElement("button");
-    copyButton.className = "copy-btn";
-    copyButton.textContent = "📋 Copy";
-    copyButton.style.display = "none"; // Hide Copy button initially
-    copyButton.onclick = function () {
-        navigator.clipboard.writeText(botMessage.textContent);
-        copyButton.textContent = "✅ Copied!";
-        setTimeout(() => (copyButton.textContent = "📋 Copy"), 2000);
-    };
-
-    botMessageContainer.appendChild(botMessage);
-    botMessageContainer.appendChild(copyButton);
-    chatBox.appendChild(botMessageContainer);
-
-    // 🔄 Fetch API to Get Response
-    fetch("/chat", {
-        method: "POST",
-        body: JSON.stringify({ message: userInput, chat_id: currentChatId }),
-        headers: { "Content-Type": "application/json" }
-    })
-    .then(response => response.json())
-    .then(data => {
-        botMessage.textContent = data.response;  // ✅ Update Bot Answer
-        copyButton.style.display = "inline-block"; // ✅ Show Copy button when answer is fully loaded
-    });
-
-    document.getElementById("user-input").value = "";  // Clear Input Field
-}
-
-
-function openSettings() {
-    document.getElementById('settings-modal').style.display = 'block';
-}
-
-function closeSettings() {
-    document.getElementById('settings-modal').style.display = 'none';
-}
-
-
 
 // ⚙️ Open Settings
 function openSettings() {

@@ -4,6 +4,7 @@ import json
 import os
 import webview  # PyWebView for Desktop UI
 import threading
+import speech_recognition as sr  # Mic Input ke liye
 
 app = Flask(__name__)
 
@@ -36,32 +37,26 @@ def delete_chat(chat_id):
 def chat_with_ecobot(user_input, chat_id):
     chat_history = load_chat_history()
 
-    # अगर chat_id नया है, तो initialize करो
     if chat_id not in chat_history:
         chat_history[chat_id] = []
 
-    # पुरानी चैट हिस्ट्री को सही format में बनाओ
     messages = []
     for msg in chat_history[chat_id]:
-        if "user" in msg and "bot" in msg:  # Check for both keys
+        if "user" in msg and "bot" in msg:
             messages.append({"role": "user", "content": msg["user"]})
             messages.append({"role": "assistant", "content": msg["bot"]})
 
-    # नया message जोड़ो
     messages.append({"role": "user", "content": user_input})
 
-    # g4f API से response लो
     response = g4f.ChatCompletion.create(
         model="gpt-4",
         messages=messages
     )
 
-    # चैट हिस्ट्री में नया message store करो
     chat_history[chat_id].append({"user": user_input, "bot": response})
     save_chat_history(chat_history)
 
     return response
-
 
 
 @app.route("/")
@@ -85,12 +80,27 @@ def chat():
     if chat_id not in chat_history:
         chat_history[chat_id] = []
 
-    # Message को सही format में store करो
     chat_history[chat_id].append({"user": user_input, "bot": bot_response})
     save_chat_history(chat_history)
 
     return jsonify({"response": bot_response})
 
+
+@app.route("/voice_input", methods=["GET"])
+def voice_input():
+    recognizer = sr.Recognizer()
+    with sr.Microphone() as source:
+        print("Listening...")
+        recognizer.adjust_for_ambient_noise(source)
+        audio = recognizer.listen(source)
+
+    try:
+        text = recognizer.recognize_google(audio)
+        return jsonify({"message": text})
+    except sr.UnknownValueError:
+        return jsonify({"message": "Sorry, I couldn't understand."})
+    except sr.RequestError:
+        return jsonify({"message": "Speech service not available."})
 
 
 @app.route("/new_chat", methods=["POST"])
@@ -117,18 +127,15 @@ def delete_chat_route():
     return jsonify({"status": "deleted"})
 
 
-# Flask Server को WebView के साथ Start करना
+# Flask Server ko WebView ke saath Start karna
 def start_flask():
     app.run(port=5000)
 
 
 if __name__ == "__main__":
-    # Flask को अलग thread में चलाओ ताकि WebView क्रैश न हो
     flask_thread = threading.Thread(target=start_flask)
     flask_thread.daemon = True
     flask_thread.start()
 
-    # WebView में ECOBOT खोलो
     webview.create_window("ECOBOT - AI Chatbot", "http://127.0.0.1:5000")
     webview.start()
-
